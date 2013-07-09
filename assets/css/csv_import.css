@@ -1,0 +1,33 @@
+a.header_new {
+    padding: 30px;
+    background-image: url(/../system/modules/csv_import/assets/images/file-import-icon-72.png);
+}
+
+#tl_buttons {
+    height: 60px;
+    margin-top: 20px;
+}
+
+#ctrl_response_box {
+    padding: 10px;
+    width: 680px !important;
+    border: 1px solid #666;
+    background-color: #dcdcdc;
+    overflow: hidden !important;
+    font-size: 14px;
+}
+
+#ctrl_response_box .green {
+    color: green;
+    font-size: 12px;
+}
+
+#ctrl_response_box .red {
+    color: red;
+    font-size: 12px;
+}
+
+.tl_tbox {
+    background: url(/../system/modules/csv_import/assets/images/csv_1.png) no-repeat right 50px;
+    min-height:300px;
+}
