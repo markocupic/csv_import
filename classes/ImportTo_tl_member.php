@@ -24,22 +24,36 @@ namespace CsvImport;
  * @author     Marko Cupic
  * @package Csv_import
  */
-class ImportTo_tl_member extends CsvImport
+class ImportTo_tl_member extends CsvImport implements ImportTo
 {
     /**
-     *
+     * @param $fieldname
+     * @param $value
+     * @param $set
+     * @return mixed
      */
-    public static function importTo_tl_member($fieldname, $value)
+    public static function prepareData($fieldname, $value, $set)
     {
-        if ($fieldname == 'password') {
-            $value = \Encryption::hash($value);
-        }
+        try {
+            // set some default }values
+            $set['tstamp'] = time();
+            $set['createdOn'] = time();
+            $set['dateAdded'] = time();
 
-        if ($fieldname == 'groups' || $fieldname == 'newsletter') {
-            $value = serialize(explode(',', $value));
+            if ($fieldname == 'password') {
+                $set[$fieldname] = \Encryption::hash($value);
+            }
 
+            if ($fieldname == 'groups' || $fieldname == 'newsletter') {
+                $set[$fieldname] = serialize(explode(',', $value));
+
+            }
+
+        } catch (\Exception $e) {
+            parent::$errorMessages[] = $e->getMessage();
+            parent::$hasError = true;
         }
-        return $value;
+        return $set;
     }
 
 

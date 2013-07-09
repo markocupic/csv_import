@@ -36,6 +36,16 @@ class CsvImport extends \Backend
      * field enclosure
      */
     public static $fe;
+    /**
+     * string
+     * primary key
+     */
+    public static $errorMessages;
+    /**
+     * string
+     * primary key
+     */
+    public static $hasError;
 
     /**
      * init the import
@@ -87,7 +97,7 @@ class CsvImport extends \Backend
         $arrFieldnames = array_map(function ($strFieldname) {
             return trim($strFieldname, CsvImport::$fe);
         }, $arrFieldnames);
-        $error = array();
+        self::$errorMessages = array();
         $row = 0;
         foreach ($arrFileContent as $line => $lineContent) {
             if ($line == 0) continue;
@@ -98,10 +108,6 @@ class CsvImport extends \Backend
             }, $arrLine);
 
             $set = array();
-            // set some default values
-            $set['tstamp'] = time();
-            $set['createdOn'] = time();
-            $set['dateAdded'] = time();
 
             // traverse the line
             foreach ($arrFieldnames as $k => $fieldname) {
@@ -109,37 +115,40 @@ class CsvImport extends \Backend
                 if (!in_array($fieldname, $arrSelectedFields)) continue;
                 // continue if field is the PRIMARY_KEY
                 if ($importMode == 'append_entries' && strtolower($fieldname) == self::$strPk) continue;
-                $fieldContent = $arrLine[$k];
-                $fieldContent = str_replace('[NEWLINE-N]', chr(10), $fieldContent);
-                $fieldContent = str_replace('[DOUBLE-QUOTE]', '"', $fieldContent);
+                $value = $arrLine[$k];
+                $value = str_replace('[NEWLINE-N]', chr(10), $value);
+                $value = str_replace('[DOUBLE-QUOTE]', '"', $value);
                 // continue if there is no content
-                if (!strlen($fieldContent)) continue;
+                if (!strlen($value)) continue;
 
                 // detect the encoding
-                $encoding = mb_detect_encoding($fieldContent, "auto", true);
+                $encoding = mb_detect_encoding($value, "auto", true);
                 if ($encoding == 'ASCII' || $encoding == '') {
-                    $fieldContent = utf8_encode($fieldContent);
+                    $value = utf8_encode($value);
                 }
+
+                $set[$fieldname] = $value;
+
+                // call the table-specific helper class
                 $strClass = 'ImportTo_' . $strTable;
-                $strMethod = 'importTo_' . $strTable;
-                $fieldContent = $strClass::$strMethod($fieldname, $fieldContent);
-
-
-                $set[$fieldname] = $fieldContent;
+                if (class_exists($strClass)) {
+                    $set = $strClass::prepareData($fieldname, $value, $set);
+                }
             }
+
             // Insert into Database
             try {
                 \Database::getInstance()->prepare("INSERT INTO " . $strTable . " %s")->set($set)->executeUncached();
             } catch (\Exception $e) {
-                $error[] = $e->getMessage();
-                $hasError = true;
+                self::$errorMessages[] = $e->getMessage();
+                self::$hasError = true;
             }
             $row++;
         }
-        if ($hasError) {
+        if (self::$hasError) {
             $message = 'Beim Importvorgang kam es zu mindestens einem Fehler. Bitte konsultieren Sie die Fehlermeldung:<br><br><br>';
+            $message .= implode('<br><br><br>', self::$errorMessages);
             $message .= '<span class="red">';
-            $message .= implode('<br><br><br>', $error);
             $message .= '</span>';
             $_SESSION['csvImport']['response'] = $message;
         } else {

@@ -28,4 +28,5 @@ ClassLoader::addClasses(array
 	// Classes
 	'CsvImport\ImportTo_tl_member' => 'system/modules/csv_import/classes/ImportTo_tl_member.php',
 	'CsvImport\CsvImport'          => 'system/modules/csv_import/classes/CsvImport.php',
+	'CsvImport\ImportTo'           => 'system/modules/csv_import/classes/ImportTo.php',
 ));
