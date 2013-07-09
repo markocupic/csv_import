@@ -32,7 +32,7 @@ class ImportTo_tl_member extends CsvImport implements ImportTo
      * @param $set
      * @return mixed
      */
-    public static function prepareData($fieldname, $value, $set)
+    public function prepareData($fieldname, $value, $set)
     {
         try {
             // set some default }values
@@ -46,12 +46,11 @@ class ImportTo_tl_member extends CsvImport implements ImportTo
 
             if ($fieldname == 'groups' || $fieldname == 'newsletter') {
                 $set[$fieldname] = serialize(explode(',', $value));
-
             }
 
         } catch (\Exception $e) {
-            parent::$errorMessages[] = $e->getMessage();
-            parent::$hasError = true;
+            $this->errorMessages[] = $e->getMessage();
+            $this->hasError = true;
         }
         return $set;
     }

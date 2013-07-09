@@ -131,7 +131,7 @@ $GLOBALS['TL_DCA']['tl_csv_import'] = array
             'eval' => array(
                 'multiple' => true,
             ),
-            'sql' => "varchar(1024) NOT NULL default ''"
+            'sql' => "blob NULL"
         ),
         'fileSRC' => array
         (
@@ -186,7 +186,8 @@ class tl_csv_import extends Backend
             // call the import class if file exists
             if (null !== $objFile) {
                 if (is_file(TL_ROOT . '/' . $objFile->path) && strtolower($objFile->extension) == 'csv') {
-                    CsvImport\CsvImport::importCsv($objFile, $strTable, $importMode, $arrSelectedFields, $strFieldseparator, $strFieldenclosure, 'id');
+                    $objCsvImport = new CsvImport\CsvImport();
+                    $objCsvImport->csvImport($objFile, $strTable, $importMode, $arrSelectedFields, $strFieldseparator, $strFieldenclosure, 'id');
                 }
             }
         }
@@ -202,7 +203,6 @@ class tl_csv_import extends Backend
         if ($objDb->import_table == '') return;
         $objFields = Database::getInstance()->listFields($objDb->import_table, 1);
         $arrOptions = array();
-        //die(print_r($objFields,true));
         foreach ($objFields as $field) {
             if ($field['name'] == 'PRIMARY') continue;
             if (in_array($field['name'], $arrOptions)) continue;
@@ -220,6 +220,9 @@ class tl_csv_import extends Backend
         if ($_SESSION['csvImport']['response']) {
             $html .= sprintf('<div id="ctrl_response_box">%s</div>', $_SESSION['csvImport']['response']);
             unset($_SESSION['csvImport']);
+        } else {
+            $response = '<a href="system/modules/csv_import/assets/images/manual_screenshot.PNG"  target="_blank" data-lightbox="manual">Bedienungsanleitung (Screenshot)</a>';
+            $html .= sprintf('<div id="ctrl_response_box_manual">%s</div>', $response);
         }
         return $html;
     }

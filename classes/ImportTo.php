@@ -33,7 +33,7 @@ interface ImportTo
      * @param $set
      * @return mixed
      */
-    public static function prepareData($fieldname, $value, $set);
+    public function prepareData($fieldname, $value, $set);
 
 
 }

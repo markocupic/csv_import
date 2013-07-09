@@ -24,47 +24,56 @@ namespace CsvImport;
  * @author     Marko Cupic
  * @package Csv_import
  */
-class CsvImport extends \Backend
+class CsvImport extends \System
 {
     /**
      * string
      * primary key
      */
-    public static $strPk = 'id';
+    public $strTable;
+
+    /**
+     * string
+     * primary key
+     */
+    public $strPk = 'id';
+
     /**
      * string
      * field enclosure
      */
-    public static $fe;
-    /**
-     * string
-     * primary key
-     */
-    public static $errorMessages;
-    /**
-     * string
-     * primary key
-     */
-    public static $hasError;
+    public $fe;
 
     /**
-     * init the import
+     * string
+     * field separator
      */
-    public static function initImport()
+    public $fs;
+
+    /**
+     * string
+     * import mode ("append" or "truncate table before insert")
+     */
+    public $importMode;
+
+    /**
+     * string
+     * primary key
+     */
+    public $errorMessages;
+
+    /**
+     * string
+     * primary key
+     */
+    public $hasError;
+
+    /**
+     *
+     */
+    public function __construct()
     {
-        if (\Input::post('SUBMIT_TYPE') == 'auto')
-            return;
-        $strTable = \Input::post('import_table');
-        $importMode = \Input::post('import_mode');
-        $arrSelectedFields = \Input::post('selected_fields');
-        $strFieldseparator = \Input::post('field_separator');
-        $strFieldenclosure = \Input::post('field_enclosure');
-        $objFile = \FilesModel::findByPk(\Input::post('fileSRC'));
-        if (null !== $objFile) {
-            if (is_file(TL_ROOT . '/' . $objFile->path) && strtolower($objFile->extension) == 'csv') {
-                self::importCsv($objFile, $strTable, $importMode, $arrSelectedFields, $strFieldseparator, $strFieldenclosure);
-            }
-        }
+        parent::__construct();
     }
 
     /**
@@ -75,49 +84,65 @@ class CsvImport extends \Backend
      * @param string
      * @param string
      */
-    public static function importCsv($objFile, $strTable, $importMode, $arrSelectedFields = null, $strFieldseparator = ';', $strFieldenclosure = '')
+    public function csvImport($objFile, $strTable, $importMode, $arrSelectedFields = null, $strFieldseparator = ';', $strFieldenclosure = '')
     {
-        $fs = $strFieldseparator;
-        $fe = $strFieldenclosure;
-        self::$fe = $fe;
-        if ($importMode == 'truncate_table') {
-            \Database::getInstance()->execute('TRUNCATE TABLE `' . $strTable . '`');
+        $this->fs = $strFieldseparator;
+        $this->fe = $strFieldenclosure;
+        $this->importMode = $importMode;
+        $this->strTable = $strTable;
+        $this->errorMessages = array();
+        $this->hasError = null;
+
+        if ($this->importMode == 'truncate_table') {
+            \Database::getInstance()->execute('TRUNCATE TABLE `' . $this->strTable . '`');
         }
         $arrSelectedFields = is_array($arrSelectedFields) ? $arrSelectedFields : array();
         if (count($arrSelectedFields) < 1)
             return;
         // create a tmp file
-        $tmpFile = new \File('system/tmp/' . md5(time()) . '.csv');
+        $tmpFile = new \File('system/tmp/mod_csv_import_' . md5(time()) . '.csv');
         $tmpFile->truncate();
-        $tmpFile->write(self::formatFile($objFile));
+        $tmpFile->write($this->formatFile($objFile));
         $tmpFile->close();
         $arrFileContent = $tmpFile->getContentAsArray();
-        $arrFieldnames = explode($fs, $arrFileContent[0]);
-        // trim quotes
-        $arrFieldnames = array_map(function ($strFieldname) {
-            return trim($strFieldname, CsvImport::$fe);
-        }, $arrFieldnames);
-        self::$errorMessages = array();
-        $row = 0;
-        foreach ($arrFileContent as $line => $lineContent) {
-            if ($line == 0) continue;
-            $arrLine = explode($fs, $lineContent);
-            // trim quotes
-            $arrLine = array_map(function ($fieldContent) {
-                return trim($fieldContent, CsvImport::$fe);
-            }, $arrLine);
 
+        // get array with the fieldnames
+        $arrFieldnames = explode($this->fs, $arrFileContent[0]);
+
+        // trim quotes
+        $arrFieldnames = array_map(function ($strFieldname, $fe) {
+            return trim($strFieldname, $fe);
+        }, $arrFieldnames, array($this->fe));
+
+        $row = 0;
+        // traverse the lines
+        foreach ($arrFileContent as $line => $lineContent) {
+            // first line contains the fieldnames
+            if ($line == 0) continue;
+
+            // get line
+            $arrLine = explode($this->fs, $lineContent);
+
+            // trim quotes
+            $arrLine = array_map(function ($fieldContent, $fe) {
+                return trim($fieldContent, $fe);
+            }, $arrLine, array($this->fe));
+
+            // define the insert array
             $set = array();
 
             // traverse the line
             foreach ($arrFieldnames as $k => $fieldname) {
                 // continue if field is excluded from import
                 if (!in_array($fieldname, $arrSelectedFields)) continue;
+
                 // continue if field is the PRIMARY_KEY
-                if ($importMode == 'append_entries' && strtolower($fieldname) == self::$strPk) continue;
+                if ($this->importMode == 'append_entries' && strtolower($fieldname) == $this->strPk) continue;
+
                 $value = $arrLine[$k];
                 $value = str_replace('[NEWLINE-N]', chr(10), $value);
                 $value = str_replace('[DOUBLE-QUOTE]', '"', $value);
+
                 // continue if there is no content
                 if (!strlen($value)) continue;
 
@@ -127,32 +152,34 @@ class CsvImport extends \Backend
                     $value = utf8_encode($value);
                 }
 
+                // store value int the insert array
                 $set[$fieldname] = $value;
 
                 // call the table-specific helper class
-                $strClass = 'ImportTo_' . $strTable;
+                $strClass = 'ImportTo_' . $this->strTable;
                 if (class_exists($strClass)) {
-                    $set = $strClass::prepareData($fieldname, $value, $set);
+                    $objClass = new $strClass;
+                    $set = $objClass->prepareData($fieldname, $value, $set);
                 }
             }
 
             // Insert into Database
             try {
-                \Database::getInstance()->prepare("INSERT INTO " . $strTable . " %s")->set($set)->executeUncached();
+                \Database::getInstance()->prepare("INSERT INTO " . $this->strTable . " %s")->set($set)->executeUncached();
             } catch (\Exception $e) {
-                self::$errorMessages[] = $e->getMessage();
-                self::$hasError = true;
+                $this->errorMessages[] = $e->getMessage();
+                $this->hasError = true;
             }
             $row++;
         }
-        if (self::$hasError) {
+        if ($this->hasError) {
             $message = 'Beim Importvorgang kam es zu mindestens einem Fehler. Bitte konsultieren Sie die Fehlermeldung:<br><br><br>';
-            $message .= implode('<br><br><br>', self::$errorMessages);
+            $message .= implode('<br><br><br>', $this->errorMessages);
             $message .= '<span class="red">';
             $message .= '</span>';
             $_SESSION['csvImport']['response'] = $message;
         } else {
-            $_SESSION['csvImport']['response'] = sprintf('<span class="green">Es wurden %s Datensätze erfolgreich in %s angelegt.</span>', $row, $strTable);
+            $_SESSION['csvImport']['response'] = sprintf('<span class="green">Es wurden %s Datensätze erfolgreich in %s angelegt.</span>', $row, $this->strTable);
         }
 
         $tmpFile->delete();
@@ -162,7 +189,7 @@ class CsvImport extends \Backend
      * @param object
      * @return string
      */
-    private static function formatFile($objFile)
+    private function formatFile($objFile)
     {
         $file = new \File($objFile->path);
         $fileContent = $file->getContent();
