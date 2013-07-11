@@ -173,13 +173,13 @@ class CsvImport extends \System
             $row++;
         }
         if ($this->hasError) {
-            $message = 'Beim Importvorgang kam es zu mindestens einem Fehler. Bitte konsultieren Sie die Fehlermeldung:<br><br><br>';
+            $message = $GLOBALS['TL_LANG']['tl_csv_import']['error_annunciation'] . ':<br><br><br>';
             $message .= implode('<br><br><br>', $this->errorMessages);
             $message .= '<span class="red">';
             $message .= '</span>';
             $_SESSION['csvImport']['response'] = $message;
         } else {
-            $_SESSION['csvImport']['response'] = sprintf('<span class="green">Es wurden %s Datensätze erfolgreich in %s angelegt.</span>', $row, $this->strTable);
+            $_SESSION['csvImport']['response'] = '<span class="green">' . sprintf($GLOBALS['TL_LANG']['tl_csv_import']['success_annunciation'], $row, $this->strTable) . '</span>';
         }
 
         $tmpFile->delete();

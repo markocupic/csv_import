@@ -221,7 +221,8 @@ class tl_csv_import extends Backend
             $html .= sprintf('<div id="ctrl_response_box">%s</div>', $_SESSION['csvImport']['response']);
             unset($_SESSION['csvImport']);
         } else {
-            $response = '<a href="system/modules/csv_import/assets/images/manual_screenshot.PNG"  target="_blank" data-lightbox="manual">Bedienungsanleitung (Screenshot)</a>';
+            $response = '<div id="ctrl_manual"><a href="%s"  target="_blank" data-lightbox="manual">%s</a></div>';
+            $response = sprintf($response, 'system/modules/csv_import/assets/images/manual_screenshot.png', $GLOBALS['TL_LANG']['tl_csv_import']['manual']);
             $html .= sprintf('<div id="ctrl_response_box_manual">%s</div>', $response);
         }
         return $html;

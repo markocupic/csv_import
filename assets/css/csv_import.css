@@ -8,6 +8,14 @@ a.header_new {
     margin-top: 20px;
 }
 
+#ctrl_manual {
+    text-align: right;
+}
+#ctrl_manual a{
+    background: url(/../system/modules/csv_import/assets/images/manual_icon_16.png) no-repeat;
+    padding:2px 0 2px 20px;
+}
+
 #ctrl_response_box {
     padding: 10px;
     width: 680px !important;
@@ -28,6 +36,6 @@ a.header_new {
 }
 
 .tl_tbox {
-    background: url(/../system/modules/csv_import/assets/images/csv_1.png) no-repeat right 50px;
-    min-height:300px;
+    background: url(/../system/modules/csv_import/assets/images/csv_icon.png) no-repeat right 50px;
+    min-height: 300px;
 }

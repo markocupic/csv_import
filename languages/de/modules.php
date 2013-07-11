@@ -11,5 +11,4 @@
  */
 
 
-$GLOBALS['TL_LANG']['MOD']['csv_import'] = array('CSV Mitgliederimport');
-//$GLOBALS['TL_LANG']['MOD']['csv_import'] = array('CSV Import');
+$GLOBALS['TL_LANG']['MOD']['csv_import'] = array('CSV Datenimport');

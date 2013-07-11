@@ -20,6 +20,12 @@ $GLOBALS['TL_LANG']['tl_csv_import']['field_separator'] = array('Field separator
 $GLOBALS['TL_LANG']['tl_csv_import']['selected_fields'] = array('Select the fields for the import');
 $GLOBALS['TL_LANG']['tl_csv_import']['fileSRC'] = array('Select a csv-file for the import');
 
-//references
+// references
 $GLOBALS['TL_LANG']['tl_csv_import']['truncate_table'] = array('truncate the target table before importing data');
 $GLOBALS['TL_LANG']['tl_csv_import']['append_entries'] = array('only append data into the target table');
+
+// messages
+$GLOBALS['TL_LANG']['tl_csv_import']['manual'] = 'Watch the manual (screenshot)';
+$GLOBALS['TL_LANG']['tl_csv_import']['error_annunciation'] = 'During the import process, there was at least one error. Please check the error messages:';
+$GLOBALS['TL_LANG']['tl_csv_import']['success_annunciation'] = '%s records have been successfully inserted in %s.';
+
