@@ -26,6 +26,6 @@ $GLOBALS['TL_LANG']['tl_csv_import']['append_entries'] = array('only append data
 
 // messages
 $GLOBALS['TL_LANG']['tl_csv_import']['manual'] = 'Watch the manual (screenshot)';
-$GLOBALS['TL_LANG']['tl_csv_import']['error_annunciation'] = 'During the import process, there was at least one error. Please check the error messages:';
-$GLOBALS['TL_LANG']['tl_csv_import']['success_annunciation'] = '%s records have been successfully inserted in %s.';
+$GLOBALS['TL_LANG']['tl_csv_import']['error_annunciation'] = 'There was at least one error during the import process. Please check the error messages:';
+$GLOBALS['TL_LANG']['tl_csv_import']['success_annunciation'] = '%s records have been successfully inserted into %s.';
 

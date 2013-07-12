@@ -99,6 +99,9 @@ class CsvImport extends \System
         $this->errorMessages = array();
         $this->hasError = null;
 
+        // Get the fieldname with the PRIMARY KEY
+        $this->strPk = $this->getPk($this->strTable) ? $this->getPk($this->strTable) : $this->strPk;
+
         if ($this->importMode == 'truncate_table') {
             \Database::getInstance()->execute('TRUNCATE TABLE `' . $this->strTable . '`');
         }
@@ -221,6 +224,24 @@ class CsvImport extends \System
         $fileContent = str_replace(chr(10), '[NEWLINE-N]', $fileContent);
         $fileContent = str_replace('[NEWLINE-RN]', chr(13) . chr(10), $fileContent);
         return $fileContent;
+    }
+
+    /**
+     * get the PRIMARY KEY
+     * @param $strTable
+     * @return string|null
+     */
+    private function getPk($strTable)
+    {
+        $pk = null;
+        $arrFields = \Database::getInstance()->listFields($strTable);
+        if (!is_array($arrFields)) return null;
+        foreach ($arrFields as $field){
+            if ($field['index'] == 'PRIMARY'){
+                $pk = $field['name'];
+            }
+        }
+        return $pk;
     }
 }
 
