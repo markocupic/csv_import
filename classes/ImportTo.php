@@ -11,10 +11,6 @@
  */
 
 
-/**
- * Namespace
- */
-namespace CsvImport;
 
 
 /**
@@ -25,6 +21,7 @@ namespace CsvImport;
  * @author     Marko Cupic
  * @package Csv_import
  */
+
 interface ImportTo
 {
     /**

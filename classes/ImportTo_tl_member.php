@@ -11,10 +11,7 @@
  */
 
 
-/**
- * Namespace
- */
-namespace CsvImport;
+
 
 
 /**
@@ -24,7 +21,7 @@ namespace CsvImport;
  * @author     Marko Cupic
  * @package Csv_import
  */
-class ImportTo_tl_member extends CsvImport implements ImportTo
+class ImportTo_tl_member extends tl_csv_import implements ImportTo
 {
     /**
      * @param $fieldname
@@ -47,12 +44,11 @@ class ImportTo_tl_member extends CsvImport implements ImportTo
                 $this->set[$fieldname] = serialize(explode(',', $value));
             }
 
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $this->errorMessages[] = $e->getMessage();
             $this->hasError = true;
         }
     }
-
 
 }
 

@@ -12,21 +12,11 @@
 
 
 /**
- * Register the namespaces
- */
-ClassLoader::addNamespaces(array
-(
-	'CsvImport',
-));
-
-
-/**
  * Register the classes
  */
 ClassLoader::addClasses(array
 (
 	// Classes
-	'CsvImport\ImportTo_tl_member' => 'system/modules/csv_import/classes/ImportTo_tl_member.php',
-	'CsvImport\CsvImport'          => 'system/modules/csv_import/classes/CsvImport.php',
-	'CsvImport\ImportTo'           => 'system/modules/csv_import/classes/ImportTo.php',
+	'ImportTo_tl_member' => 'system/modules/csv_import/classes/ImportTo_tl_member.php',
+	'ImportTo'           => 'system/modules/csv_import/classes/ImportTo.php',
 ));
