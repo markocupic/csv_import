@@ -20,6 +20,10 @@ $GLOBALS['TL_DCA']['tl_csv_import'] = array
             )
         ),
         'dataContainer' => 'Table',
+        'onload_callback' => array
+        (
+            array('tl_csv_import', 'onloadCallback')
+        ),
         'onsubmit_callback' => array
         (
             array('tl_csv_import', 'initImport')
@@ -169,6 +173,16 @@ $GLOBALS['TL_DCA']['tl_csv_import'] = array
  */
 class tl_csv_import extends Backend
 {
+    /**
+     * onload callback
+     */
+    public function onloadCallback()
+    {
+        if ($_SESSION['csvImport']['response']) {
+            // set the palette
+            $GLOBALS['TL_DCA']['tl_csv_import']['palettes']['default'] = 'response_box';
+        }
+    }
 
     /**
      * init the import
@@ -192,7 +206,6 @@ class tl_csv_import extends Backend
             }
         }
     }
-
 
     /**
      * @return array
@@ -227,5 +240,6 @@ class tl_csv_import extends Backend
         }
         return $html;
     }
+
 }           
               

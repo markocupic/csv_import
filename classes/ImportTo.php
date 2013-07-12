@@ -30,10 +30,9 @@ interface ImportTo
     /**
      * @param $fieldname
      * @param $value
-     * @param $set
      * @return mixed
      */
-    public function prepareData($fieldname, $value, $set);
+    public function prepareDataForInsert($fieldname, $value);
 
 
 }

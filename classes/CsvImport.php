@@ -51,6 +51,12 @@ class CsvImport extends \System
     public $fs;
 
     /**
+     * array
+     * data-array
+     */
+    public $set;
+
+    /**
      * string
      * import mode ("append" or "truncate table before insert")
      */
@@ -129,7 +135,7 @@ class CsvImport extends \System
             }, $arrLine, array($this->fe));
 
             // define the insert array
-            $set = array();
+            $this->set = array();
 
             // traverse the line
             foreach ($arrFieldnames as $k => $fieldname) {
@@ -153,19 +159,34 @@ class CsvImport extends \System
                 }
 
                 // store value int the insert array
-                $set[$fieldname] = $value;
+                $this->set[$fieldname] = $value;
 
                 // call the table-specific helper class
                 $strClass = 'ImportTo_' . $this->strTable;
                 if (class_exists($strClass)) {
                     $objClass = new $strClass;
-                    $set = $objClass->prepareData($fieldname, $value, $set);
+                    $objClass->prepareDataForInsert($fieldname, $value);
                 }
             }
 
-            // Insert into Database
             try {
-                \Database::getInstance()->prepare("INSERT INTO " . $this->strTable . " %s")->set($set)->executeUncached();
+                // Insert into Database
+                $objInsertStmt = \Database::getInstance()->prepare("INSERT INTO " . $this->strTable . " %s")->set($this->set)->executeUncached();
+
+                if ($objInsertStmt->affectedRows) {
+                    $insertID = $objInsertStmt->insertId;
+
+                    // Call the oncreate_callback
+                    if (is_array($GLOBALS['TL_DCA'][$this->strTable]['config']['oncreate_callback'])) {
+                        foreach ($GLOBALS['TL_DCA'][$this->strTable]['config']['oncreate_callback'] as $callback) {
+                            $this->import($callback[0]);
+                            $this->$callback[0]->$callback[1]($this->strTable, $insertID, $this->set, $this);
+                        }
+                    }
+
+                    // Add a log entry
+                    $this->log('A new entry "' . $this->strTable . '.id=' . $insertID . '" has been created.', __CLASS__ . ' ' . __FUNCTION__ . '()', TL_GENERAL);
+                }
             } catch (\Exception $e) {
                 $this->errorMessages[] = $e->getMessage();
                 $this->hasError = true;

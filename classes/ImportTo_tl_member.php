@@ -29,30 +29,28 @@ class ImportTo_tl_member extends CsvImport implements ImportTo
     /**
      * @param $fieldname
      * @param $value
-     * @param $set
-     * @return mixed
+     * @return mixed|void
      */
-    public function prepareData($fieldname, $value, $set)
+    public function prepareDataForInsert($fieldname, $value)
     {
         try {
-            // set some default }values
-            $set['tstamp'] = time();
-            $set['createdOn'] = time();
-            $set['dateAdded'] = time();
+            // set some default values
+            $this->set['tstamp'] = time();
+            $this->set['createdOn'] = time();
+            $this->set['dateAdded'] = time();
 
             if ($fieldname == 'password') {
-                $set[$fieldname] = \Encryption::hash($value);
+                $this->set[$fieldname] = \Encryption::hash($value);
             }
 
             if ($fieldname == 'groups' || $fieldname == 'newsletter') {
-                $set[$fieldname] = serialize(explode(',', $value));
+                $this->set[$fieldname] = serialize(explode(',', $value));
             }
 
         } catch (\Exception $e) {
             $this->errorMessages[] = $e->getMessage();
             $this->hasError = true;
         }
-        return $set;
     }
 
 
