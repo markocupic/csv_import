@@ -379,7 +379,18 @@ class tl_csv_import extends Backend
             $_SESSION['csvImport']['response'] = '<span class="green">' . sprintf($GLOBALS['TL_LANG']['tl_csv_import']['success_annunciation'], $row, $this->strTable) . '</span>';
         }
 
+        // delete temp-file and other old "forgotten" csv-temp-files
         $tmpFile->delete();
+        $arrFiles = scan(TL_ROOT . '/system/tmp');
+        foreach ($arrFiles as $file) {
+            if (!is_file(TL_ROOT . '/system/tmp/' . $file)) continue;
+            if (preg_match('/mod_csv_import_/', $file)) {
+                $objFile = new File ('system/tmp/' . $file);
+                if ($objFile->mtime + 120 < time()) {
+                    $objFile->delete();
+                }
+            }
+        }
     }
 
     /**
@@ -390,7 +401,7 @@ class tl_csv_import extends Backend
     {
         $file = new File($objFile->path);
         $fileContent = $file->getContent();
-        $fileContent = str_replace('\"', '[DOUBLE-QUOTE]', $fileContent);
+        $fileContent = str_replace('e\"', '[DOUBLE-QUOTE]', $fileContent);
         $fileContent = str_replace('\r\n', '[NEWLINE-RN]', $fileContent);
         $fileContent = str_replace(chr(13) . chr(10), '[NEWLINE-RN]', $fileContent);
         $fileContent = str_replace('\n', '[NEWLINE-N]', $fileContent);
