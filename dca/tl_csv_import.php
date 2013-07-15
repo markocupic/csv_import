@@ -346,6 +346,14 @@ class tl_csv_import extends Backend
             }
 
             try {
+                // Trigger the csv_import Hook
+                if (is_array($GLOBALS['TL_HOOKS']['csv_import'])) {
+                    foreach ($GLOBALS['TL_HOOKS']['csv_import'] as $callback) {
+                        $this->import($callback[0]);
+                        $this->set = $this->$callback[0]->$callback[1]($this->strTable, $this->set, $this);
+                    }
+                }
+
                 // Insert into Database
                 $objInsertStmt = Database::getInstance()->prepare("INSERT INTO " . $this->strTable . " %s")->set($this->set)->executeUncached();
 
