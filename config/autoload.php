@@ -17,6 +17,5 @@
 ClassLoader::addClasses(array
 (
 	// Classes
-	'ImportTo_tl_member' => 'system/modules/csv_import/classes/ImportTo_tl_member.php',
-	'ImportTo'           => 'system/modules/csv_import/classes/ImportTo.php',
+	'ImportCsvToTlMember' => 'system/modules/csv_import/classes/ImportCsvToTlMember.php',
 ));

@@ -1,9 +1,7 @@
 <?php
 /**
  * Contao Open Source CMS
- *
  * Copyright (c) 2005-2013 Leo Feyer
- *
  * @package Csv_import
  * @link    https://contao.org
  * @license http://www.gnu.org/licenses/lgpl-3.0.html LGPL
@@ -86,6 +84,12 @@ $GLOBALS['TL_DCA']['tl_csv_import'] = array
         (
             'label' => &$GLOBALS['TL_LANG']['tl_csv_import']['import_table'],
             'inputType' => 'select',
+            /*
+            'options_callback' => array(
+                'tl_csv_import',
+                'optionsCbGetTables'
+            ),
+            */
             'options' => array('tl_member'),
             'eval' => array(
                 'multiple' => false,
@@ -249,7 +253,8 @@ class tl_csv_import extends Backend
             // call the import class if file exists
             if (null !== $objFile) {
                 if (is_file(TL_ROOT . '/' . $objFile->path) && strtolower($objFile->extension) == 'csv') {
-                    $this->csvImport($objFile, $strTable, $importMode, $arrSelectedFields, $strFieldseparator, $strFieldenclosure, 'id');
+                    $strSrc = $objFile->path;
+                    $this->csvImport($strSrc, $strTable, $importMode, $arrSelectedFields, $strFieldseparator, $strFieldenclosure, 'id');
                 }
             }
         }
@@ -263,7 +268,7 @@ class tl_csv_import extends Backend
      * @param string
      * @param string
      */
-    public function csvImport($objFile, $strTable, $importMode, $arrSelectedFields = null, $strFieldseparator = ';', $strFieldenclosure = '')
+    public function csvImport($csvSrc, $strTable, $importMode, $arrSelectedFields = null, $strFieldseparator = ';', $strFieldenclosure = '')
     {
         $this->fs = $strFieldseparator;
         $this->fe = $strFieldenclosure;
@@ -281,12 +286,9 @@ class tl_csv_import extends Backend
         $arrSelectedFields = is_array($arrSelectedFields) ? $arrSelectedFields : array();
         if (count($arrSelectedFields) < 1)
             return;
-        // create a tmp file
-        $tmpFile = new File('system/tmp/mod_csv_import_' . md5(time()) . '.csv');
-        $tmpFile->truncate();
-        $tmpFile->write($this->formatFile($objFile));
-        $tmpFile->close();
-        $arrFileContent = $tmpFile->getContentAsArray();
+        // get file content as array
+        $objFile = new File ($csvSrc);
+        $arrFileContent = $objFile->getContentAsArray();
 
         // get array with the fieldnames
         $arrFieldnames = explode($this->fs, $arrFileContent[0]);
@@ -322,8 +324,6 @@ class tl_csv_import extends Backend
                 if ($this->importMode == 'append_entries' && strtolower($fieldname) == $this->strPk) continue;
 
                 $value = $arrLine[$k];
-                $value = str_replace('[NEWLINE-N]', chr(10), $value);
-                $value = str_replace('[DOUBLE-QUOTE]', '"', $value);
 
                 // continue if there is no content
                 if (!strlen($value)) continue;
@@ -337,23 +337,18 @@ class tl_csv_import extends Backend
                 // store value int the insert array
                 $this->set[$fieldname] = $value;
 
-                // call the table-specific helper class
-                $strClass = 'ImportTo_' . $this->strTable;
-                if (class_exists($strClass)) {
-                    $objClass = new $strClass;
-                    $objClass->prepareDataForInsert($fieldname, $value);
+                // Trigger the csv_import-Hook
+                if (is_array($GLOBALS['TL_HOOKS']['csv_import'])) {
+                    foreach ($GLOBALS['TL_HOOKS']['csv_import'] as $hook) {
+                        if (class_exists($hook[0])) {
+                            $objClass = new $hook[0];
+                            $this->set = $objClass->$hook[1]($this, $this->strTable, $fieldname, $value, $this->set);
+                        }
+                    }
                 }
             }
 
             try {
-                // Trigger the csv_import Hook
-                if (is_array($GLOBALS['TL_HOOKS']['csv_import'])) {
-                    foreach ($GLOBALS['TL_HOOKS']['csv_import'] as $callback) {
-                        $this->import($callback[0]);
-                        $this->set = $this->$callback[0]->$callback[1]($this->strTable, $this->set, $this);
-                    }
-                }
-
                 // Insert into Database
                 $objInsertStmt = Database::getInstance()->prepare("INSERT INTO " . $this->strTable . " %s")->set($this->set)->executeUncached();
 
@@ -386,36 +381,6 @@ class tl_csv_import extends Backend
         } else {
             $_SESSION['csvImport']['response'] = '<span class="green">' . sprintf($GLOBALS['TL_LANG']['tl_csv_import']['success_annunciation'], $row, $this->strTable) . '</span>';
         }
-
-        // delete temp-file and other old "forgotten" csv-temp-files
-        $tmpFile->delete();
-        $arrFiles = scan(TL_ROOT . '/system/tmp');
-        foreach ($arrFiles as $file) {
-            if (!is_file(TL_ROOT . '/system/tmp/' . $file)) continue;
-            if (preg_match('/mod_csv_import_/', $file)) {
-                $objFile = new File ('system/tmp/' . $file);
-                if ($objFile->mtime + 120 < time()) {
-                    $objFile->delete();
-                }
-            }
-        }
-    }
-
-    /**
-     * @param object
-     * @return string
-     */
-    private function formatFile($objFile)
-    {
-        $file = new File($objFile->path);
-        $fileContent = $file->getContent();
-        $fileContent = str_replace('e\"', '[DOUBLE-QUOTE]', $fileContent);
-        $fileContent = str_replace('\r\n', '[NEWLINE-RN]', $fileContent);
-        $fileContent = str_replace(chr(13) . chr(10), '[NEWLINE-RN]', $fileContent);
-        $fileContent = str_replace('\n', '[NEWLINE-N]', $fileContent);
-        $fileContent = str_replace(chr(10), '[NEWLINE-N]', $fileContent);
-        $fileContent = str_replace('[NEWLINE-RN]', chr(13) . chr(10), $fileContent);
-        return $fileContent;
     }
 
     /**
@@ -436,6 +401,18 @@ class tl_csv_import extends Backend
         return $pk;
     }
 
+    /**
+     * @return array
+     */
+    public function optionsCbGetTables()
+    {
+        $objTables = Database::getInstance()->listTables();
+        $arrOptions = array();
+        foreach ($objTables as $table) {
+            $arrOptions[] = $table;
+        }
+        return $arrOptions;
+    }
 
     /**
      * @return array

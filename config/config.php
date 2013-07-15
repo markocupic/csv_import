@@ -2,9 +2,7 @@
 
 /**
  * Contao Open Source CMS
- *
  * Copyright (c) 2005-2013 Leo Feyer
- *
  * @package Csv_import
  * @link    https://contao.org
  * @license http://www.gnu.org/licenses/lgpl-3.0.html LGPL
@@ -21,9 +19,22 @@ if (TL_MODE == 'BE') {
             'tl_csv_import'
         )
     );
-}
-if (TL_MODE == 'BE' && $_GET['do'] == 'csv_import') {
-    $GLOBALS['TL_JAVASCRIPT'][] = 'system/modules/csv_import/assets/js/csv_import.js';
-    $GLOBALS['TL_CSS'][] = 'system/modules/csv_import/assets/css/csv_import.css';
+
+    if ($_GET['do'] == 'csv_import') {
+        $GLOBALS['TL_JAVASCRIPT'][] = 'system/modules/csv_import/assets/js/csv_import.js';
+        $GLOBALS['TL_CSS'][] = 'system/modules/csv_import/assets/css/csv_import.css';
+
+        // Register insert-Hooks
+
+        // Prepare Data for import into tl_member
+        $GLOBALS['TL_HOOKS']['csv_import'][] = array('ImportCsvToTlMember', 'prepareDataForInsert');
+
+        // Prepare Data for import into tl_user
+        //$GLOBALS['TL_HOOKS']['csv_import'] = array('ImportCsvToTlUser', 'prepareDataForInsert');
+
+        // Prepare Data for import into tl_news
+        //$GLOBALS['TL_HOOKS']['csv_import'] = array("ImportCsvToTlNews", 'prepareDataForInsert');
+    }
+
 }
 
