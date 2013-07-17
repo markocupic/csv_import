@@ -296,7 +296,7 @@ class tl_csv_import extends Backend
         // trim quotes
         $arrFieldnames = array_map(function ($strFieldname, $fe) {
             return trim($strFieldname, $fe);
-        }, $arrFieldnames, array($this->fe));
+        }, $arrFieldnames, array_fill(0, count($arrFieldnames), $this->fe));
 
         $row = 0;
         // traverse the lines
@@ -310,7 +310,7 @@ class tl_csv_import extends Backend
             // trim quotes
             $arrLine = array_map(function ($fieldContent, $fe) {
                 return trim($fieldContent, $fe);
-            }, $arrLine, array($this->fe));
+            }, $arrLine, array_fill(0, count($arrLine), $this->fe));
 
             // define the insert array
             $this->set = array();
@@ -336,7 +336,6 @@ class tl_csv_import extends Backend
 
                 // store value int the insert array
                 $this->set[$fieldname] = $value;
-
                 // Trigger the csv_import-Hook
                 if (is_array($GLOBALS['TL_HOOKS']['csv_import'])) {
                     foreach ($GLOBALS['TL_HOOKS']['csv_import'] as $hook) {

@@ -10,4 +10,7 @@
  * @license http://www.gnu.org/licenses/lgpl-3.0.html LGPL
  */
 
-$GLOBALS['TL_LANG']['MOD']['csv_import'] = array('CSV-data-import');
+/**
+ * Back end modules
+ */
+$GLOBALS['TL_LANG']['MOD']['csv_import'] = array('CSV-data-import', 'Import db-records with a csv file.');
