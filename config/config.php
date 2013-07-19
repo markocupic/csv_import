@@ -14,7 +14,7 @@
  */
 if (TL_MODE == 'BE') {
     $GLOBALS['BE_MOD']['system']['csv_import'] = array(
-        'icon' => 'system/modules/csv_import/assets/images/file-import-icon-16.png',
+        'icon' => 'system/modules/csv_import/assets/images/database_add.png',
         'tables' => array(
             'tl_csv_import'
         )

@@ -111,6 +111,7 @@ $GLOBALS['TL_DCA']['tl_csv_import'] = array
         (
             'label' => &$GLOBALS['TL_LANG']['tl_csv_import']['field_enclosure'],
             'inputType' => 'text',
+            'default' => '"',
             'eval' => array(
                 'mandatory' => false,
             ),

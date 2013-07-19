@@ -1,6 +1,6 @@
 a.header_new {
-    padding: 30px;
-    background-image: url(/../system/modules/csv_import/assets/images/file-import-icon-72.png);
+    padding: 20px;
+    background-image: url(/../system/modules/csv_import/assets/images/database_table.png);
 }
 
 #tl_buttons {
@@ -36,6 +36,8 @@ a.header_new {
 }
 
 .tl_tbox {
+    /*
     background: url(/../system/modules/csv_import/assets/images/csv_icon.png) no-repeat right 50px;
+    */
     min-height: 300px;
 }

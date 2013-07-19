@@ -14,6 +14,7 @@ document.addEvent('domready', function () {
 
     if ($$('.header_new')) {
         $$('.header_new').setProperty('title', 'start a new csv-import');
+        $$('.header_new').set('text', 'Einen neuen CSV-Datenimport starten.');
     }
 
     if (document.id('ctrl_response_box')) {
