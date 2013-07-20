@@ -290,22 +290,20 @@ class tl_csv_import extends Backend
         if (count($arrSelectedFields) < 1)
             return;
 
-        // get file handle
-        $handle = fopen(TL_ROOT . '/' . $csvSrc, 'r');
+        // get file as array
+        $objFile = new File($csvSrc);
+        $arrFile = $objFile->getContentAsArray();
 
-        $row = 0;
         $inserts = 0;
         // traverse the lines
-        while ($arrLine = fgetcsv($handle, null, $this->fs, $this->fe)) {
+        foreach ($arrFile as $row => $strLine) {
+
             // first must contain the fieldnames
             if ($row == 0) {
                 // get array with the fieldnames
-                $arrFieldnames = $arrLine;
-                $row++;
+                $arrFieldnames = str_getcsv($strLine, $this->fs, $this->fe);
                 continue;
             }
-
-            $row++;
 
             // define the insert array
             $this->set = array();
@@ -320,6 +318,7 @@ class tl_csv_import extends Backend
                 if ($this->importMode == 'append_entries' && strtolower($fieldname) == $this->strPk) continue;
 
                 // get the field content
+                $arrLine = str_getcsv($strLine, $this->fs, $this->fe);
                 $value = $arrLine[$k];
 
                 // continue if there is no content
@@ -380,7 +379,6 @@ class tl_csv_import extends Backend
         } else {
             $_SESSION['csvImport']['response'] = '<span class="green">' . sprintf($GLOBALS['TL_LANG']['tl_csv_import']['success_annunciation'], $inserts, $this->strTable) . '</span>';
         }
-        fclose($handle);
     }
 
 
