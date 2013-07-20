@@ -104,6 +104,7 @@ $GLOBALS['TL_DCA']['tl_csv_import'] = array
             'default' => ';',
             'eval' => array(
                 'mandatory' => true,
+                'maxlength' => 1
             ),
             'sql' => "varchar(255) NOT NULL default ''"
         ),
@@ -114,6 +115,7 @@ $GLOBALS['TL_DCA']['tl_csv_import'] = array
             'default' => '"',
             'eval' => array(
                 'mandatory' => false,
+                'maxlength' => 1
             ),
             'sql' => "varchar(255) NOT NULL default ''"
         ),
@@ -287,43 +289,37 @@ class tl_csv_import extends Backend
         $arrSelectedFields = is_array($arrSelectedFields) ? $arrSelectedFields : array();
         if (count($arrSelectedFields) < 1)
             return;
-        // get file content as array
-        $objFile = new File ($csvSrc);
-        $arrFileContent = $objFile->getContentAsArray();
 
-        // get array with the fieldnames
-        $arrFieldnames = explode($this->fs, $arrFileContent[0]);
-
-        // trim quotes
-        $arrFieldnames = array_map(function ($strFieldname, $fe) {
-            return trim($strFieldname, $fe);
-        }, $arrFieldnames, array_fill(0, count($arrFieldnames), $this->fe));
+        // get file handle
+        $handle = fopen(TL_ROOT . '/' . $csvSrc, 'r');
 
         $row = 0;
+        $inserts = 0;
         // traverse the lines
-        foreach ($arrFileContent as $line => $lineContent) {
-            // first line contains the fieldnames
-            if ($line == 0) continue;
+        while ($arrLine = fgetcsv($handle, null, $this->fs, $this->fe)) {
+            // first must contain the fieldnames
+            if ($row == 0) {
+                // get array with the fieldnames
+                $arrFieldnames = $arrLine;
+                $row++;
+                continue;
+            }
 
-            // get line
-            $arrLine = explode($this->fs, $lineContent);
-
-            // trim quotes
-            $arrLine = array_map(function ($fieldContent, $fe) {
-                return trim($fieldContent, $fe);
-            }, $arrLine, array_fill(0, count($arrLine), $this->fe));
+            $row++;
 
             // define the insert array
             $this->set = array();
 
-            // traverse the line
+            // traverse the lines
             foreach ($arrFieldnames as $k => $fieldname) {
+
                 // continue if field is excluded from import
                 if (!in_array($fieldname, $arrSelectedFields)) continue;
 
                 // continue if field is the PRIMARY_KEY
                 if ($this->importMode == 'append_entries' && strtolower($fieldname) == $this->strPk) continue;
 
+                // get the field content
                 $value = $arrLine[$k];
 
                 // continue if there is no content
@@ -335,7 +331,7 @@ class tl_csv_import extends Backend
                     $value = utf8_encode($value);
                 }
 
-                // store value int the insert array
+                // store value
                 $this->set[$fieldname] = $value;
                 // Trigger the csv_import-Hook
                 if (is_array($GLOBALS['TL_HOOKS']['csv_import'])) {
@@ -348,12 +344,16 @@ class tl_csv_import extends Backend
                 }
             }
 
+            // skip empty data records
+            if (!count(array_values($this->set))) continue;
+
             try {
                 // Insert into Database
                 $objInsertStmt = Database::getInstance()->prepare("INSERT INTO " . $this->strTable . " %s")->set($this->set)->executeUncached();
 
                 if ($objInsertStmt->affectedRows) {
                     $insertID = $objInsertStmt->insertId;
+                    $inserts++;
 
                     // Call the oncreate_callback
                     if (is_array($GLOBALS['TL_DCA'][$this->strTable]['config']['oncreate_callback'])) {
@@ -370,7 +370,6 @@ class tl_csv_import extends Backend
                 $this->errorMessages[] = $e->getMessage();
                 $this->hasError = true;
             }
-            $row++;
         }
         if ($this->hasError) {
             $message = $GLOBALS['TL_LANG']['tl_csv_import']['error_annunciation'] . ':<br><br><br>';
@@ -379,9 +378,11 @@ class tl_csv_import extends Backend
             $message .= '</span>';
             $_SESSION['csvImport']['response'] = $message;
         } else {
-            $_SESSION['csvImport']['response'] = '<span class="green">' . sprintf($GLOBALS['TL_LANG']['tl_csv_import']['success_annunciation'], $row, $this->strTable) . '</span>';
+            $_SESSION['csvImport']['response'] = '<span class="green">' . sprintf($GLOBALS['TL_LANG']['tl_csv_import']['success_annunciation'], $inserts, $this->strTable) . '</span>';
         }
+        fclose($handle);
     }
+
 
     /**
      * get the PRIMARY KEY
